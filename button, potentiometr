@@ -1,0 +1,71 @@
+const int Button = A5;
+int signal = 0;
+int Counter = 0;
+int lastSignal = 0;
+long previousMillis = 0;//счетчики времени, прошлое время
+long currentMillis = 0;//счетчики времени, текущее время
+volatile int counter = 0;   // счётчик
+volatile bool encFlag = 0;  // флаг поворота
+
+void setup() 
+{
+  Serial.begin(9600);
+  pinMode(Button, INPUT);
+  attachInterrupt(0, encIsr, CHANGE);
+  attachInterrupt(1, encIsr, CHANGE);
+}
+
+void loop()
+{
+  //Код для кнопки
+  signal = digitalRead(Button);
+  if (signal != lastSignal)
+  {
+  if (signal == HIGH)
+  {
+    Counter++; //Увеличивает счётчик нажатий
+    if (Counter==1)//Если было одно нажатие
+    {
+      previousMillis = millis(); //Запускает отсчёт времени
+    }
+    if (Counter == 4) //Если было 4 нажатия
+    {
+      currentMillis = millis(); //Узнает текущее время от начала отсчёта
+      int bpm = 4*60000/(currentMillis-previousMillis); //Рассчитывает bpm
+      Serial.print("BPM = "); Serial.println(bpm); //Выводит в консоль bpm
+      Counter=0; //Обнуление счётчика
+    }
+  }
+  lastSignal = signal;
+  }
+  //Код для энкодера
+  if (encFlag) 
+  {
+    Serial.println(counter);
+    encFlag = 0;
+  }
+}
+
+volatile byte reset = 0, last = 0;
+void encIsr() 
+{  
+  byte state = (PIND & 0b1100) >> 2;  // D2 + D3
+  if (reset && state == 0b11) 
+  {
+    int prevCount = counter;
+    if (last == 0b10) 
+    {
+      counter++;
+      Serial.println(counter);
+    }
+    else if (last == 0b01) 
+    {
+      counter--;
+      Serial.println(counter);
+    };
+    if (prevCount != counter) encFlag = 1;    
+    reset = 0;
+  }
+  if (!state) reset = 1;
+  last = state;
+}
