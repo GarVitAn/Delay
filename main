@@ -1,0 +1,80 @@
+// Pin Definitions: 
+#define DELAY1 10
+#define DELAY2 9
+#define SWA 3
+#define SWB 14
+#define SWC 2
+#define SWD 4 
+#define LED1_G 1 
+#define LED1_R 0
+#define LED2_G 5
+#define LED2_R 6
+#define ENC_A 16
+#define ENC_B 18
+#define ENC_GND 17
+#define ENC_PUSH 19
+#define BYPASS_DETECT 8
+#define TAP_DETECT  15
+
+//VARIABLES
+unsigned int ENC_counter = 100; 
+int ENC_aState;
+int ENC_aLastState;  
+int ENC_aState_selection=0;
+int ENC_aLastState_selection=0;
+void read_encoder(void);
+  
+// the setup function runs once when you press reset or power the board
+void setup() 
+{
+//set the pins //init the values
+pinMode(DELAY1, OUTPUT);    analogWrite(DELAY1, 100);
+pinMode(DELAY2, OUTPUT);    analogWrite(DELAY2, 100);
+pinMode(SWA, OUTPUT);       digitalWrite(SWA, LOW);
+pinMode(SWB, OUTPUT);       digitalWrite(SWB, LOW);
+pinMode(SWC, OUTPUT);       digitalWrite(SWC, LOW);
+pinMode(SWD, OUTPUT);       digitalWrite(SWD, LOW);
+pinMode(LED1_G, OUTPUT);    analogWrite(LED1_G, 0);
+pinMode(LED1_R, OUTPUT);    analogWrite(LED1_R, 0);
+pinMode(LED2_G, OUTPUT);    analogWrite(LED2_G, 0);
+pinMode(LED2_R, OUTPUT);    analogWrite(LED2_R, 0);
+pinMode(ENC_A, INPUT_PULLUP);
+pinMode(ENC_B, INPUT_PULLUP);
+pinMode(ENC_GND, OUTPUT);
+pinMode(ENC_PUSH, INPUT_PULLUP);
+pinMode(BYPASS_DETECT, INPUT_PULLUP);
+pinMode(TAP_DETECT, INPUT_PULLUP);
+ENC_aLastState = digitalRead(ENC_A); 
+}
+
+
+void loop() // the loop function runs over and over again forever
+{
+//detect if the effect is on or off
+while((digitalRead(BYPASS_DETECT) == LOW)) 
+  {
+  digitalWrite(LED1_R,LOW);digitalWrite(LED2_R,LOW);digitalWrite(LED1_G,LOW);digitalWrite(LED2_G,LOW); 
+  }  
+  
+read_encoder();
+//update the delay value based on the encoder reading
+analogWrite(DELAY1, ENC_counter);
+analogWrite(DELAY2, ENC_counter);
+//update the LED colors
+digitalWrite(LED1_G, HIGH); digitalWrite(LED2_G, HIGH);digitalWrite(LED1_R,LOW);  digitalWrite(LED2_R,LOW);    
+//set the audio relay
+digitalWrite(SWA, HIGH);digitalWrite(SWB, HIGH);digitalWrite(SWC, HIGH);digitalWrite(SWD, HIGH);
+}
+
+void read_encoder(void)
+{
+ ENC_aState = digitalRead(ENC_A); // Reads the "current" state
+   if (ENC_aState != ENC_aLastState)
+   {    
+     if (digitalRead(ENC_B) != ENC_aState) 
+          {if(ENC_counter>50)ENC_counter-=5;}
+     else 
+          {if(ENC_counter<230)ENC_counter+=5;}   
+   } 
+ENC_aLastState = ENC_aState; // Updates the prev. state 
+}
